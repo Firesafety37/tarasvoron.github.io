@@ -1,0 +1,671 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://176.110.193.182:1234/v1/chat/completions",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"ruadapt_gwen2.5_7b_ext_u48_instruct_gguf\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Классифицируй запрос пользователя, ответом должна быть цифра. Если в запросе есть название города, ответь 1. Если пользователь хочет оставить заявку или отправил свои данные, ответь 2. Если запрос не подходит под первые 2 пункта, ответь 3.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"{{ $json.message.text }}\"\n    }\n  ],\n  \"temperature\": 0.7\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "id": "2ce18dd4-628e-42fb-a382-42872d44ba06",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "16d4c4dd-2cf6-4e44-8c92-79e1fe23bca6",
+      "name": "Telegram Trigger",
+      "webhookId": "1b1197cb-3223-453c-9cef-a2f967a9609f",
+      "credentials": {
+        "telegramApi": {
+          "id": "KsSxA3iutZ0JYgxA",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.choices[0].message.content }}",
+                    "rightValue": "1",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "28165aae-caca-4b41-ae37-56609537bc55"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "daebe385-16d7-4a5e-bddb-51acd53053d8",
+                    "leftValue": "={{ $json.choices[0].message.content }}",
+                    "rightValue": "2",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "0706493d-6c38-4916-b2d0-cdf16c9a8f8f",
+                    "leftValue": "={{ $json.choices[0].message.content }}",
+                    "rightValue": "3",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        440,
+        0
+      ],
+      "id": "b29582f4-7cf5-4efe-a8b6-f1dce426c703",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://93.189.228.120:8001/add",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "Район\tТип квартиры\tПлощадь (м²)\tСостояние\tЦена (руб.)\nЦентральный\t1-комнатная\t40\tНовостройка\t5 200 000\n2-комнатная\t65\tВторичка\t6 800 000\n3-комнатная\t85\tЕвроремонт\t9 500 000\nДзержинский\t1-комнатная\t35\tХрущёвка\t3 400 000\n2-комнатная\t55\tУлучшенная планировка\t4 900 000\n3-комнатная\t75\tНовостройка\t7 200 000\nФрунзенский\t1-комнатная\t38\tСтудия\t3 800 000\n2-комнатная\t60\tСовременный ремонт\t5 500 000\n3-комнатная\t80\tПанельный дом\t8 000 000\nКрасноперекопский\t1-комнатная\t32\tВторичка\t2 900 000\n2-комнатная\t50\tЧастичный ремонт\t4 300 000\n3-комнатная\t70\tСталинка\t6 700 000\nЛенинский\t1-комнатная\t36\tНовостройка\t4 100 000\n2-комнатная\t58\tС ремонтом\t5 700 000\n3-комнатная\t82\tСвободная планировка\t8 900 000"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -260,
+        -300
+      ],
+      "id": "309cafd7-a4df-4e94-8db6-18ff15f434c1",
+      "name": "DB+"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://176.110.193.182:1234/v1/chat/completions",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"ruadapt_gwen2.5_7b_ext_u48_instruct_gguf\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Определи город пользователя. Отвечай одним словом\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"{{ $('Telegram Trigger').item.json.message.text }}\"\n    }\n  ],\n  \"temperature\": 0.7\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        -320
+      ],
+      "id": "47f24aad-a3c0-490c-851f-ddc0c51ed1a6",
+      "name": "ГОРОД1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://93.189.228.120:8001/query",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "query_text",
+              "value": "={{ $json.choices[0].message.content }}"
+            },
+            {
+              "name": "n_results",
+              "value": "5"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        -320
+      ],
+      "id": "1956aea3-1143-453b-bed8-47751df803d2",
+      "name": "DB Search"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d375d9db-6f27-42b4-810d-8f57e985898d",
+              "name": "metadatas[0]",
+              "value": "={{ JSON.stringify($json.metadatas[0]) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1100,
+        -320
+      ],
+      "id": "ebdffa9b-f8e0-4e03-a684-807e9861a1a8",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e66b5214-276c-478c-8e32-5262e07a527e",
+              "name": "metadatas[0]",
+              "value": "=Ответь на основе этого документа {{ $json.metadatas[0] }}, и запроса пользователя {{ $('Telegram Trigger').item.json.message.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1320,
+        -320
+      ],
+      "id": "949bdbbf-ffc5-4a1d-a0a7-aab67da06bfd",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://176.110.193.182:1234/v1/chat/completions",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"ruadapt_gwen2.5_7b_ext_u48_instruct_gguf\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify($json.metadatas[0]) }}\n    }\n  ],\n  \"temperature\": 0.7\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1540,
+        -320
+      ],
+      "id": "f84ee721-8f99-4219-99c3-0a6e2e77febe",
+      "name": "LM studio final"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.choices[0].message.content }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1760,
+        -320
+      ],
+      "id": "6925720a-d8db-47e4-990e-f5e08017cd4d",
+      "name": "Telegram",
+      "webhookId": "8f6d5786-25fd-4438-920c-b7798812a495",
+      "credentials": {
+        "telegramApi": {
+          "id": "KsSxA3iutZ0JYgxA",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://176.110.193.182:1234/v1/chat/completions",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"ruadapt_gwen2.5_7b_ext_u48_instruct_gguf\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Если пользователь предоставил контактные данные (имя и номер телефона, ответь просто 1. Если ты не нашел контактных данных, попроси их отправить. Категорически запрещено отвечать 1, если в заявке нет номера и имени\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Если пользователь предоставил контактные данные (имя и номер телефона, ответь просто 1. Если ты не нашел контактных данных, попроси их отправить. Категорически запрещено отвечать 1, если в заявке нет номера и имени {{ $('Telegram Trigger').item.json.message.text }}\"\n    }\n  ],\n  \"temperature\": 0.7\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        -20
+      ],
+      "id": "7a0f3aa4-7e14-48ce-be8d-a9cdfe9b3d85",
+      "name": "LM2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ba6051e7-62c0-4ef8-8acf-04ba6710734f",
+              "leftValue": "={{ $json.choices[0].message.content }}",
+              "rightValue": "1",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        940,
+        -20
+      ],
+      "id": "d18f80c2-2e49-4b00-8f4e-66532b2427f1",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $('LM2').item.json.choices[0].message.content }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1200,
+        300
+      ],
+      "id": "65e60fed-d088-46be-88b6-653d20c7e98a",
+      "name": "Telegram1",
+      "webhookId": "9a353213-99bb-4a01-8148-987f3157514e",
+      "credentials": {
+        "telegramApi": {
+          "id": "KsSxA3iutZ0JYgxA",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://176.110.193.182:1234/v1/chat/completions",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"ruadapt_gwen2.5_7b_ext_u48_instruct_gguf\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Определи имя клиента и номер телефона, ответ строго в формате: NAME = alex PHONE = +79001234567. Имя строго транслитерацией на английском\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"={{ $('Telegram Trigger').item.json.message.text }}\"\n    }\n  ],\n  \"temperature\": 0.7\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        100
+      ],
+      "id": "e37dee28-34ec-454d-b355-7efb276ee93a",
+      "name": "LM"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "05177f16-f57c-47ab-9e93-3de89ecc0fac",
+              "name": "name",
+              "value": "={{ $json.choices[0].message.content.match(/NAME\\s*=\\s*(\\w+)/)[1].trim() }}\n",
+              "type": "string"
+            },
+            {
+              "id": "29d21bf7-19b0-41c0-baee-f2187ebcb93c",
+              "name": "phone",
+              "value": "={{ $json.choices[0].message.content.match(/PHONE\\s*=\\s*(\\+\\d+)/)[1] }}\n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1420,
+        100
+      ],
+      "id": "0cd13c42-3474-4f78-826d-71c0948cc554",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://b24-a01n3i.bitrix24.ru/rest/1/cmiv4ctpvd1wjjym/crm.contact.add.json",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "=   {\n     \"fields\": {\n        \"NAME\": \"{{ $json.name.replace(/\\n/g, '') }}\",\n       \"PHONE\": [\n         {\n           \"VALUE\": \"={{ typeof $json.phone }}\",\n           \"VALUE_TYPE\": \"WORK\"\n         }\n       ]\n     }\n   }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1640,
+        100
+      ],
+      "id": "db38d1de-fb7e-4002-a42f-3c7edf77dbb3",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": " Заявка получена. Менеджер с Вами свяжется",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1200,
+        -100
+      ],
+      "id": "933f24c5-52c7-4abe-9efa-1579abea092f",
+      "name": "Telegram2",
+      "webhookId": "f4adaf26-1af2-4d5b-877c-89df545de0ae",
+      "credentials": {
+        "telegramApi": {
+          "id": "KsSxA3iutZ0JYgxA",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://176.110.193.182:1234/v1/chat/completions",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"ruadapt_gwen2.5_7b_ext_u48_instruct_gguf\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Общайся с пользователем как менеджер по недвижимости\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"{{ $('Telegram Trigger').item.json.message.text }}\"\n    }\n  ],\n  \"temperature\": 0.7\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        700,
+        520
+      ],
+      "id": "a6f898d3-178c-452b-bf0d-71c46534da9c",
+      "name": "LM3"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.choices[0].message.content }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        920,
+        520
+      ],
+      "id": "73642e26-6494-417c-8928-d0ff2dd4e683",
+      "name": "Telegram3",
+      "webhookId": "322e6e7d-8175-4867-8177-5149f81106f6",
+      "credentials": {
+        "telegramApi": {
+          "id": "KsSxA3iutZ0JYgxA",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "ГОРОД1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "LM2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "LM3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ГОРОД1": {
+      "main": [
+        [
+          {
+            "node": "DB Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DB Search": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "LM studio final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LM studio final": {
+      "main": [
+        [
+          {
+            "node": "Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LM2": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "LM",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Telegram2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LM": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LM3": {
+      "main": [
+        [
+          {
+            "node": "Telegram3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "7dce812f-34c4-4265-850b-271ffa090695",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b390159bf44470b98c5f5ac38fbc4b06c898b516f67aa227af32baf9789f5bb4"
+  },
+  "id": "HqkOqtvx0X72DU1t",
+  "tags": []
+}
