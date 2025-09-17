@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Резюме | AI Integration Specialist</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --accent-color: #f59e0b;
+            --text-color: #1f2937;
+            --text-light: #6b7280;
+            --bg-color: #ffffff;
+            --bg-light: #f8fafc;
+            --border-color: #e5e7eb;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] {
+            --primary-color: #3b82f6;
+            --secondary-color: #2563eb;
+            --accent-color: #fbbf24;
+            --text-color: #f9fafb;
+            --text-light: #d1d5db;
+            --bg-color: #111827;
+            --bg-light: #1f2937;
+            --border-color: #374151;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background: var(--bg-color);
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 60px 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .profile {
+            position: relative;
+            z-index: 1;
+        }
+
+        .profile-image {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 5px solid white;
+            margin: 0 auto 30px;
+            background: var(--bg-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            color: var(--primary-color);
+            box-shadow: var(--shadow-lg);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .profile h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .profile .title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            opacity: 0.9;
+        }
+
+        .profile .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.8;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Theme Toggle */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow);
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Navigation */
+        .nav {
+            background: var(--bg-color);
+            border-bottom: 1px solid var(--border-color);
+            padding: 20px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-list {
+            display: flex;
+            justify-content: center;
+            list-style: none;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+
+        .nav-item a {
+            text-decoration: none;
+            color: var(--text-color);
+            font-weight: 500;
+            padding: 10px 20px;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-item a:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Main Content */
+        .main {
+            padding: 60px 0;
+        }
+
+        .section {
+            margin-bottom: 80px;
+            background: var(--bg-color);
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .section:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            color: var(--primary-color);
+            position: relative;
+            padding-bottom: 15px;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background: var(--accent-color);
+            border-radius: 2px;
+        }
+
+        /* Contact Info */
+        .contact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+            background: var(--bg-light);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .contact-item:hover {
+            transform: translateX(10px);
+            box-shadow: var(--shadow);
+        }
+
+        .contact-item i {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            width: 30px;
+        }
+
+        /* Skills */
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .skill-category {
+            background: var(--bg-light);
+            padding: 30px;
+            border-radius: 15px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .skill-category h3 {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+
+        .skill-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .skill-tag {
+            background: var(--primary-color);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .skill-tag:hover {
+            background: var(--secondary-color);
+            transform: scale(1.05);
+        }
+
+        /* Experience */
+        .experience-item {
+            border-left: 3px solid var(--primary-color);
+            padding-left: 30px;
+            margin-bottom: 40px;
+            position: relative;
+            padding-bottom: 30px;
+        }
+
+        .experience-item::before {
+            content: '';
+            position: absolute;
+            left: -8px;
+            top: 0;
+            width: 13px;
+            height: 13px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            border: 3px solid var(--bg-color);
+        }
+
+        .experience-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .experience-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .experience-company {
+            font-size: 1.1rem;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .experience-date {
+            background: var(--accent-color);
+            color: var(--bg-color);
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .experience-description {
+            margin-top: 15px;
+            line-height: 1.7;
+        }
+
+        .experience-description ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+
+        .experience-description li {
+            margin-bottom: 8px;
+        }
+
+        /* Education */
+        .education-item {
+            display: flex;
+            gap: 30px;
+            padding: 30px;
+            background: var(--bg-light);
+            border-radius: 15px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .education-item:hover {
+            transform: translateX(10px);
+            box-shadow: var(--shadow);
+        }
+
+        .education-icon {
+            background: var(--primary-color);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .education-content h3 {
+            font-size: 1.3rem;
+            margin-bottom: 5px;
+            color: var(--primary-color);
+        }
+
+        .education-content .institution {
+            font-size: 1.1rem;
+            color: var(--text-light);
+            margin-bottom: 10px;
+        }
+
+        .education-content .date {
+            background: var(--accent-color);
+            color: var(--bg-color);
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            display: inline-block;
+        }
+
+        /* Projects */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .project-card {
+            background: var(--bg-light);
+            border-radius: 15px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .project-card:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .project-header {
+            padding: 25px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .project-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .project-description {
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+
+        .project-footer {
+            padding: 20px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .project-tech {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .tech-tag {
+            background: var(--primary-color);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+        }
+
+        .project-links {
+            display: flex;
+            gap: 10px;
+        }
+
+        .project-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+
+        .project-link:hover {
+            color: var(--secondary-color);
+            transform: scale(1.2);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--text-color);
+            color: white;
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .social-link {
+            color: white;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .social-link:hover {
+            color: var(--accent-color);
+            transform: scale(1.2);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .profile h1 {
+                font-size: 2rem;
+            }
+
+            .profile .title {
+                font-size: 1.2rem;
+            }
+
+            .nav-list {
+                gap: 20px;
+            }
+
+            .section {
+                padding: 25px;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .experience-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .education-item {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .footer-content {
+                flex-direction: column;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            .theme-toggle,
+            .nav {
+                display: none;
+            }
+
+            .header {
+                background: none;
+                color: black;
+            }
+
+            .section {
+                box-shadow: none;
+                border: 1px solid #ddd;
+                break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()">
+        <i class="fas fa-moon"></i>
+    </button>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="profile">
+                <div class="profile-image">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <h1>AI Integration Specialist</h1>
+                <div class="title">Специалист по внедрению искусственного интеллекта</div>
+                <div class="subtitle">
+                    Преподаватель ВУЗ МЧС России, переходящий в IT-сферу. 
+                    Специализируюсь на внедрении AI-решений, создании GPT-агентов и автоматизации бизнес-процессов.
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="container">
+            <ul class="nav-list">
+                <li class="nav-item"><a href="#about">О себе</a></li>
+                <li class="nav-item"><a href="#skills">Навыки</a></li>
+                <li class="nav-item"><a href="#experience">Опыт</a></li>
+                <li class="nav-item"><a href="#education">Образование</a></li>
+                <li class="nav-item"><a href="#projects">Проекты</a></li>
+                <li class="nav-item"><a href="#qualities">Качества</a></li>
+                <li class="nav-item"><a href="#contact">Контакты</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <!-- About Section -->
+            <section id="about" class="section">
+                <h2 class="section-title">О себе</h2>
+                <div class="contact-grid">
+                    <div class="contact-item">
+                        <i class="fas fa-phone"></i>
+                        <div>
+                            <strong>Телефон</strong><br>
+                            +7 (901) 689-56-5
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fab fa-telegram"></i>
+                        <div>
+                            <strong>Telegram</strong><br>
+                            @Firesafety76
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-user"></i>
+                        <div>
+                            <strong>Возраст</strong><br>
+                            30 лет
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-home"></i>
+                        <div>
+                            <strong>Семейное положение</strong><br>
+                            Женат, двое детей
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top: 30px; font-size: 1.1rem; line-height: 1.8;">
+                    <p>
+                        <strong>ЦЕЛЬ:</strong> Получение позиции в IT-сфере, связанной с внедрением и разработкой решений на базе искусственного интеллекта 
+                        (AI Integration Specialist, AI Solutions Engineer, Automation Specialist).
+                    </p>
+                    <p style="margin-top: 20px;">
+                        На данный момент работаю преподавателем в ВУЗ МЧС России. Имею опыт обучения студентов современным технологиям 
+                        и готов перейти в IT-сферу для реализации проектов в области искусственного интеллекта.
+                    </p>
+                    <p style="margin-top: 20px;">
+                        <strong>УВЛЕЧЕНИЯ:</strong> Хоккей, футбол, туризм, саморазвитие
+                    </p>
+                </div>
+            </section>
+
+            <!-- Skills Section -->
+            <section id="skills" class="section">
+                <h2 class="section-title">Навыки и технологии</h2>
+                <div class="skills-grid">
+                    <div class="skill-category">
+                        <h3><i class="fas fa-robot"></i> AI & Машинное обучение</h3>
+                        <div class="skill-tags">
+                            <span class="skill-tag">ChatGPT</span>
+                            <span class="skill-tag">Anthropic</span>
+                            <span class="skill-tag">DeepSeek</span>
+                            <span class="skill-tag">Flux</span>
+                            <span class="skill-tag">StableDiffusion</span>
+                            <span class="skill-tag">Runway</span>
+                            <span class="skill-tag">Recraft</span>
+                            <span class="skill-tag">GPT-агенты</span>
+                        </div>
+                    </div>
+                    <div class="skill-category">
+                        <h3><i class="fas fa-cogs"></i> No-code/Low-code платформы</h3>
+                        <div class="skill-tags">
+                            <span class="skill-tag">n8n</span>
+                            <span class="skill-tag">Make</span>
+                            <span class="skill-tag">Relevance</span>
+                            <span class="skill-tag">Scade</span>
+                            <span class="skill-tag">AI-воркфлоу</span>
+                            <span class="skill-tag">Автоматизация</span>
+                        </div>
+                    </div>
+                    <div class="skill-category">
+                        <h3><i class="fas fa-code"></i> Технические навыки</h3>
+                        <div class="skill-tags">
+                            <span class="skill-tag">API Integration</span>
+                            <span class="skill-tag">Webhooks</span>
+                            <span class="skill-tag">ngrok</span>
+                            <span class="skill-tag">HTTP запросы</span>
+                            <span class="skill-tag">Docker</span>
+                            <span class="skill-tag">Node.js</span>
+                            <span class="skill-tag">Python</span>
+                        </div>
+                    </div>
+                    <div class="skill-category">
+                        <h3><i class="fas fa-chart-line"></i> Бизнес-процессы</h3>
+                        <div class="skill-tags">
+                            <span class="skill-tag">Анализ процессов</span>
+                            <span class="skill-tag">Внедрение технологий</span>
+                            <span class="skill-tag">Жизненный цикл продукта</span>
+                            <span class="skill-tag">Решение задач</span>
+                            <span class="skill-tag">Стрессоустойчивость</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Experience Section -->
+            <section id="experience" class="section">
+                <h2 class="section-title">Опыт работы</h2>
+                
+                <div class="experience-item">
+                    <div class="experience-header">
+                        <div>
+                            <div class="experience-title">Преподаватель</div>
+                            <div class="experience-company">ВУЗ МЧС России</div>
+                        </div>
+                        <div class="experience-date">2018 - настоящее время</div>
+                    </div>
+                    <div class="experience-description">
+                        <p>
+                            Ведение образовательных программ по направлениям «Техносферная безопасность», «Пожарная безопасность». 
+                            Разработка и проведение занятий, контроль выполнения проектов.
+                        </p>
+                        <ul>
+                            <li>Обучение студентов работе с современными технологиями и инструментами</li>
+                            <li>Опыт публичных выступлений и донесения сложной информации простым языком</li>
+                            <li>Разработка образовательных программ и методических материалов</li>
+                            <li>Контроль и оценка выполнения студенческих проектов</li>
+                            <li>Ведение научно-исследовательской деятельности в области техносферной безопасности</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Education Section -->
+            <section id="education" class="section">
+                <h2 class="section-title">Образование</h2>
+                
+                <div class="education-item">
+                    <div class="education-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <div class="education-content">
+                        <h3>Техносферная безопасность</h3>
+                        <div class="institution">Санкт-Петербург, Адъюнктура</div>
+                        <div class="date">Аспирантура</div>
+                    </div>
+                </div>
+
+                <div class="education-item">
+                    <div class="education-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <div class="education-content">
+                        <h3>Пожарная безопасность</h3>
+                        <div class="institution">Высшее техническое образование</div>
+                        <div class="date">Специалитет</div>
+                    </div>
+                </div>
+
+                <div class="education-item">
+                    <div class="education-icon">
+                        <i class="fas fa-certificate"></i>
+                    </div>
+                    <div class="education-content">
+                        <h3>Специалист по внедрению искусственного интеллекта</h3>
+                        <div class="institution">GeekBrains</div>
+                        <div class="date">2024</div>
+                    </div>
+                </div>
+
+                <div class="education-item">
+                    <div class="education-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="education-content">
+                        <h3>Работа с AI-платформами и нейросетями</h3>
+                        <div class="institution">Практические кейсы и проекты</div>
+                        <div class="date">Создание AI-агентов, автоматизация с использованием AI</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Projects Section -->
+            <section id="projects" class="section">
+                <h2 class="section-title">Проекты</h2>
+                <div style="margin-bottom: 40px; font-size: 1.1rem; line-height: 1.8;">
+                    <p>
+                        В процессе обучения и саморазвития в области AI создаю практические проекты и решения 
+                        с использованием современных технологий искусственного интеллекта.
+                    </p>
+                </div>
+
+                <div class="projects-grid">
+                    <div class="project-card">
+                        <div class="project-header">
+                            <h3 class="project-title">AI Workflow Automation</h3>
+                            <p class="project-description">
+                                Автоматизация бизнес-процессов с использованием n8n и GPT-агентов. 
+                                Интеграция различных сервисов через API и webhooks.
+                            </p>
+                        </div>
+                        <div class="project-footer">
+                            <div class="project-tech">
+                                <span class="tech-tag">n8n</span>
+                                <span class="tech-tag">GPT-агенты</span>
+                                <span class="tech-tag">API</span>
+                                <span class="tech-tag">Webhooks</span>
+                            </div>
+                            <div class="project-links">
+                                <a href="#" class="project-link" title="GitHub">
+                                    <i class="fab fa-github"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="project-card">
+                        <div class="project-header">
+                            <h3 class="project-title">Content Generation System</h3>
+                            <p class="project-description">
+                                Система автоматической генерации контента с использованием различных AI-моделей: 
+                                ChatGPT, Anthropic, StableDiffusion для создания текстов и изображений.
+                            </p>
+                        </div>
+                        <div class="project-footer">
+                            <div class="project-tech">
+                                <span class="tech-tag">ChatGPT</span>
+                                <span class="tech-tag">Anthropic</span>
+                                <span class="tech-tag">StableDiffusion</span>
+                                <span class="tech-tag">Python</span>
+                            </div>
+                            <div class="project-links">
+                                <a href="#" class="project-link" title="GitHub">
+                                    <i class="fab fa-github"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="project-card">
+                        <div class="project-header">
+                            <h3 class="project-title">Educational AI Assistant</h3>
+                            <p class="project-description">
+                                AI-ассистент для образовательных целей, помогающий в создании учебных материалов 
+                                и автоматизации образовательных процессов.
+                            </p>
+                        </div>
+                        <div class="project-footer">
+                            <div class="project-tech">
+                                <span class="tech-tag">DeepSeek</span>
+                                <span class="tech-tag">Docker</span>
+                                <span class="tech-tag">Node.js</span>
+                                <span class="tech-tag">AI Integration</span>
+                            </div>
+                            <div class="project-links">
+                                <a href="#" class="project-link" title="GitHub">
+                                    <i class="fab fa-github"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Personal Qualities Section -->
+            <section id="qualities" class="section">
+                <h2 class="section-title">Личные качества</h2>
+                <div class="skills-grid">
+                    <div class="skill-category">
+                        <h3><i class="fas fa-target"></i> Целеустремленность</h3>
+                        <div class="skill-tags">
+                            <span class="skill-tag">Доведение проектов до результата</span>
+                            <span class="skill-tag">Фокус на цели</span>
+                            <span class="skill-tag">Мотивация к развитию</span>
+                        </div>
+                    </div>
+                    <div class="skill-category">
+                        <h3><i class="fas fa-brain"></i> Обучаемость</h3>
+                        <div class="skill-tags">
+                            <span class="skill-tag">Высокая обучаемость</span>
+                            <span class="skill-tag">Готовность к новым технологиям</span>
+                            <span class="skill-tag">Готов к новому обучению</span>
+                        </div>
+                    </div>
+                    <div class="skill-category">
+                        <h3><i class="fas fa-puzzle-piece"></i> Решение задач</h3>
+                        <div class="skill-tags">
+                            <span class="skill-tag">Упорство в поиске решений</span>
+                            <span class="skill-tag">Анализ нестандартных задач</span>
+                            <span class="skill-tag">Стрессоустойчивость</span>
+                        </div>
+                    </div>
+                    <div class="skill-category">
+                        <h3><i class="fas fa-users"></i> Командная работа</h3>
+                        <div class="skill-tags">
+                            <span class="skill-tag">Работа в команде</span>
+                            <span class="skill-tag">Ответственность</span>
+                            <span class="skill-tag">Лидерские качества</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Contact Section -->
+            <section id="contact" class="section">
+                <h2 class="section-title">Связаться со мной</h2>
+                <div style="text-align: center; margin-top: 30px;">
+                    <p style="font-size: 1.2rem; margin-bottom: 30px; color: var(--text-light);">
+                        Готов обсудить возможности работы в сфере AI и автоматизации. Свяжитесь со мной любым удобным способом!
+                    </p>
+                    <div style="display: flex; justify-content: center; gap: 30px; flex-wrap: wrap;">
+                        <a href="tel:+7901689565" style="background: var(--primary-color); color: white; padding: 15px 30px; border-radius: 25px; text-decoration: none; font-weight: 600; transition: all 0.3s ease;">
+                            <i class="fas fa-phone"></i> Позвонить
+                        </a>
+                        <a href="https://t.me/Firesafety76" style="background: var(--accent-color); color: var(--bg-color); padding: 15px 30px; border-radius: 25px; text-decoration: none; font-weight: 600; transition: all 0.3s ease;">
+                            <i class="fab fa-telegram"></i> Telegram
+                        </a>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div>
+                    <p>&copy; 2024 AI Integration Specialist. Все права защищены.</p>
+                </div>
+                <div class="social-links">
+                    <a href="https://t.me/Firesafety76" class="social-link" title="Telegram">
+                        <i class="fab fa-telegram"></i>
+                    </a>
+                    <a href="tel:+7901689565" class="social-link" title="Телефон">
+                        <i class="fas fa-phone"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Theme toggle functionality
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            // Update theme toggle icon
+            const themeToggle = document.querySelector('.theme-toggle i');
+            themeToggle.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        }
+
+        // Initialize theme from localStorage
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.body.setAttribute('data-theme', savedTheme);
+            
+            const themeToggle = document.querySelector('.theme-toggle i');
+            themeToggle.className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+
+            // Smooth scrolling for navigation links
+            document.querySelectorAll('.nav-item a').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
+                    const targetSection = document.querySelector(targetId);
+                    
+                    if (targetSection) {
+                        targetSection.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+
+            // Add scroll effect to navigation
+            window.addEventListener('scroll', function() {
+                const nav = document.querySelector('.nav');
+                if (window.scrollY > 100) {
+                    nav.style.background = 'rgba(255, 255, 255, 0.95)';
+                    nav.style.backdropFilter = 'blur(10px)';
+                } else {
+                    nav.style.background = 'var(--bg-color)';
+                    nav.style.backdropFilter = 'none';
+                }
+            });
+
+            // Animate elements on scroll
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver(function(entries) {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, observerOptions);
+
+            // Observe all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.style.opacity = '0';
+                section.style.transform = 'translateY(30px)';
+                section.style.transition = 'all 0.6s ease';
+                observer.observe(section);
+            });
+        });
+
+        // Add hover effects to project cards
+        document.addEventListener('DOMContentLoaded', function() {
+            const projectCards = document.querySelectorAll('.project-card');
+            
+            projectCards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-10px) scale(1.02)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+        });
+    </script>
+</body>
+</html>
