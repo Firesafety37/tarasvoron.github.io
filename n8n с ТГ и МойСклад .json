@@ -1,0 +1,2136 @@
+{
+  "name": "n8n с ТГ и МойСклад",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "=https://api.telegram.org/bot8359508985:AAEyGYes8O5SE2_i3uIl6JwEASj1mcgE_6w/getFile?file_id={{$json.body.message.photo[$json.body.message.photo.length - 1].file_id}}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1136,
+        768
+      ],
+      "id": "bf6113b8-bdc6-42a7-9e67-8a8f89327620",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.telegram.org/file/bot8359508985:AAEyGYes8O5SE2_i3uIl6JwEASj1mcgE_6w/{{$json.result.file_path}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "image/*"
+            },
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0 Safari/537.36"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -912,
+        768
+      ],
+      "id": "3e890e7c-ce14-47d4-a7d5-13dab7e61a7e",
+      "name": "HTTP Request5"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  if (!item.binary || !item.binary.data) throw new Error('Нет binary.data от HTTP Request3');\n  const b = item.binary.data;\n  b.mimeType = 'image/jpeg';      // или 'image/png'\n  b.fileName = 'invoice.jpg';     // принудительно .jpg\n  return { json: item.json, binary: { data: b } };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -624,
+        768
+      ],
+      "id": "568c1f6c-cd07-4065-90af-8513ec6629dc",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1) Берём сырой текст и чистим кодовые блоки\nconst src = String($input.first()?.json?.content ?? $input.first()?.json?.raw ?? '')\n  .replace(/```json|```/g, '')\n  .trim();\n\n// 2) Инкрементально извлекаем все ПОЛНЫЕ JSON-объекты внутри первого массива [...]\n// Игнорируем любой префикс (например, \"yes\") и обрывы в конце\nfunction extractCompleteObjectsFromFirstArray(text) {\n  const start = text.indexOf('[');\n  if (start < 0) return [];\n  let i = start + 1;\n  const objs = [];\n  let inStr = false, quote = null, esc = false, depth = 0, objStart = -1;\n\n  for (; i < text.length; i++) {\n    const ch = text[i];\n\n    if (inStr) {\n      if (esc) { esc = false; continue; }\n      if (ch === '\\\\') { esc = true; continue; }\n      if (ch === quote) { inStr = false; quote = null; continue; }\n      continue;\n    }\n\n    if (ch === '\"' || ch === \"'\") { inStr = true; quote = ch; continue; }\n\n    if (ch === '{') {\n      if (depth === 0) objStart = i;\n      depth++;\n    } else if (ch === '}') {\n      depth--;\n      if (depth === 0 && objStart >= 0) {\n        const slice = text.slice(objStart, i + 1);\n        try { objs.push(JSON.parse(slice)); } catch {}\n        objStart = -1;\n      }\n    } else if (ch === ']') {\n      // конец массива — выходим\n      break;\n    }\n  }\n  return objs;\n}\n\nconst items = extractCompleteObjectsFromFirstArray(src);\n\n// Если ни одного валидного объекта — вернём диагностическое сырьё\nif (!items.length) {\n  return [{ json: { parseError: true, raw: src } }];\n}\n\n// 3) Нормализация чисел/строк\nconst toNum = v => {\n  const s = String(v ?? '').replace(/[^\\d.,\\-]/g, '').replace(',', '.');\n  const n = parseFloat(s);\n  return Number.isFinite(n) ? n : 0;\n};\n\nconst products = items.map(it => ({\n  name: String(it?.name ?? '').trim() || 'Неизвестный товар',\n  code: String(it?.code ?? '').trim(),\n  quantity: toNum(it?.quantity),\n  unit: String(it?.unit ?? '').trim() || 'шт',\n  price: toNum(it?.price),\n  total: toNum(it?.total),\n  supplier: String(it?.supplier ?? '').trim(),\n  date: String(it?.date ?? '').trim(),\n}));\n\n// Каждый товар отдельным item\nreturn products.map(p => ({ json: p }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        32,
+        624
+      ],
+      "id": "2b8f8428-8fcf-419c-af33-e42f667efdb9",
+      "name": "Парсинг ответа OpenAI1",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Webhook телеграмм').item.json.body.message.chat.id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        368,
+        960
+      ],
+      "id": "b07c84a8-5e76-4a36-b24b-69177340fdb5",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        960
+      ],
+      "id": "1458feb1-1bf4-4536-987e-0119045a46ae",
+      "name": "OpenAI_Chat_Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "Ske4KTQ9oCHRiMto",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Ищет склад в МойСклад. Использовать первый найденный.",
+        "url": "https://api.moysklad.ru/api/remap/1.2/entity/store",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "limit",
+              "value": "10"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        704,
+        944
+      ],
+      "id": "25a55874-4784-4a2e-93e9-f5dcc2c17647",
+      "name": "find_store",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "Yp05pkimkq9ytBHo",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Ищет организацию в МойСклад. Использовать первую доступную.",
+        "url": "https://api.moysklad.ru/api/remap/1.2/entity/organization",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "limit",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        544,
+        944
+      ],
+      "id": "faee0799-d8cc-42c8-81d0-d0e348c7410d",
+      "name": "find_organization",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "Yp05pkimkq9ytBHo",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.moysklad.ru/api/remap/1.2/entity/enter",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept-Encoding",
+              "value": "gzip"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        992,
+        608
+      ],
+      "id": "21570064-160a-4ee0-a2df-cd8da2f31e0a",
+      "name": "create_enter",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "Yp05pkimkq9ytBHo",
+          "name": "Bearer Auth account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        208,
+        128
+      ],
+      "id": "10299413-81cb-47c7-91e5-a21536b00aef",
+      "name": "Loop Over Items",
+      "alwaysOutputData": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "name": "Replace Me",
+      "typeVersion": 1,
+      "position": [
+        1104,
+        96
+      ],
+      "id": "f7286a75-f410-4108-9942-ae1de8be7b93",
+      "alwaysOutputData": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://api.moysklad.ru/api/remap/1.2/entity/product",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "search",
+              "value": "=={{ $json.name }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "limit",
+              "value": "1000"
+            },
+            {
+              "name": "offset",
+              "value": "0"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        496,
+        144
+      ],
+      "id": "9f9c2f9b-7e1f-42fe-9048-b5e83f7e0a36",
+      "name": "search_products",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "Yp05pkimkq9ytBHo",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.meta.size }}",
+                    "rightValue": 0,
+                    "operator": {
+                      "type": "number",
+                      "operation": "gt"
+                    },
+                    "id": "3d6fab57-fd12-4b48-907a-3ee73f591011"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Товар найден"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "21993a78-139d-40c3-8dc7-5fc21526acbe",
+                    "leftValue": "={{ $json.meta.size }}",
+                    "rightValue": 0,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Товар не найден"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        688,
+        144
+      ],
+      "id": "7d5e0b77-8453-41bf-8f58-6045d480bc25",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.moysklad.ru/api/remap/1.2/entity/product",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept-Encoding",
+              "value": "gzip"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \n  name: $('Loop Over Items').item.json.name,\n  code: $('Loop Over Items').item.json.code,\n  quantity: $('Loop Over Items').item.json.quantity,\n  unit: $('Loop Over Items').item.json.unit,\n  price: $('Loop Over Items').item.json.price,\n  total: $('Loop Over Items').item.json.total,\n} }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        896,
+        272
+      ],
+      "id": "4afa93cc-fd0a-4e54-a6cc-402d453e53a4",
+      "name": "create_products_bulk1",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "Yp05pkimkq9ytBHo",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Webhook телеграмм').item.json.body.message.from.id }}",
+        "text": "=Создан новый товар в МойСклад:  {{ $('Loop Over Items').item.json.name }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1120,
+        272
+      ],
+      "id": "d0794eab-7bb6-4392-bec3-d142a67345fc",
+      "name": "Send a text message2",
+      "webhookId": "037547d1-245a-43b3-b292-c453d8f6202e",
+      "credentials": {
+        "telegramApi": {
+          "id": "iJNIGdTYk2ZnIihg",
+          "name": "Telegram account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Поиск и создание отсутствующих товаров",
+        "height": 432,
+        "width": 1200,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        112,
+        48
+      ],
+      "typeVersion": 1,
+      "id": "ad60d66b-3b2c-41c1-ad0b-2fb0ffe53c9c",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Скачивание и конвертирование изображения",
+        "height": 448,
+        "width": 656
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1616,
+        640
+      ],
+      "typeVersion": 1,
+      "id": "9a4ceef0-5b98-4007-bafb-ec4f179b8204",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Компьютерное зрение и структурирование ответа в JSON",
+        "height": 432,
+        "width": 640,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -928,
+        640
+      ],
+      "typeVersion": 1,
+      "id": "3d409c49-4c01-4c84-9f98-c9ffe8fc1171",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        912,
+        112
+      ],
+      "id": "e32b2eb1-2bad-4f48-b022-8c807b4c5720",
+      "name": "Wait",
+      "webhookId": "bb99e091-ff80-4d9d-932f-6162e1995bf8"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "text": "=Analyze this invoice/receipt and extract the following information in JSON format:\n\n{\n  \"name\": \"product name\",\n  \"code\": \"product code or SKU\",\n  \"quantity\": quantity (number only),\n  \"unit\": \"unit of measurement (pcs/kg/m/l etc.)\",\n  \"price\": price per unit (number only),\n  \"total\": total amount (number only),\n  \"supplier\": \"supplier name\",\n  \"date\": \"invoice date\"\n}\n\nImportant requirements:\n- For numeric fields (quantity, price, total): extract only numbers without currency symbols or units\n- If any information is not found, use empty string \"\" for text and 0 for numbers\n- Ensure the JSON format is valid and properly structured\n- Focus on the main product information from the invoice\n\nYou have only two options to answer. The first option is if you have completed the task and recognized all the products, then make the message header \"yes\", and then the decrypted data in the above form in JSON format. And the second option is if you could not recognize, then send the answer \"no\". Do not give any other options, thoughts or advice.",
+        "inputType": "base64",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -432,
+        768
+      ],
+      "id": "f254d6a1-773a-4a38-802f-e498f636e9e6",
+      "name": "Считывание текста с фото",
+      "credentials": {
+        "openAiApi": {
+          "id": "Ske4KTQ9oCHRiMto",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "0726ee54-5501-4cea-984f-679a2814e860",
+              "leftValue": "={{ $json.content }}",
+              "rightValue": "yes",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -176,
+        672
+      ],
+      "id": "07816605-d8d1-4b3a-a63d-64018cbf7337",
+      "name": "Удалось считать?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c5895273-e8af-4bcd-9de8-ed8f5d2f76a5",
+              "leftValue": "={{ $json.body.message.photo }}",
+              "rightValue": "",
+              "operator": {
+                "type": "array",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1824,
+        816
+      ],
+      "id": "1c495c47-496b-41a3-8286-02ccf0392c72",
+      "name": "Фото или нет"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        256,
+        624
+      ],
+      "id": "061bd052-8655-497a-89e5-05f8cb9a0279",
+      "name": "Ждем создание товаров",
+      "alwaysOutputData": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Получение списка товаров для поиска методанных.",
+        "url": "https://api.moysklad.ru/api/remap/1.2/entity/product",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept-Encoding",
+              "value": "gzip"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        848,
+        944
+      ],
+      "id": "1b7b9b07-139f-4512-b2a4-e10d2db6f7b9",
+      "name": "Product_list",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "Yp05pkimkq9ytBHo",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "314cde3b-247c-40f3-a53b-3a7fd6807b17",
+              "leftValue": "={{ $json.meta }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        432,
+        320
+      ],
+      "id": "f4338b2a-2847-460f-9d7c-1f7eb99fbc0f",
+      "name": "Фильтр от пустых массивов (items)"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Webhook телеграмм').item.json.body.message.chat.id }}",
+        "text": "=Составлено перемещение на  {{ $json.positions.meta.size }} товара(ов)",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1200,
+        624
+      ],
+      "id": "afadf8ae-ae3c-4ee6-ad49-0943d38b0539",
+      "name": "Количество товаров занесенных оприходованием",
+      "webhookId": "245f1ae9-13f9-4c75-ab1b-86aa0afae184",
+      "credentials": {
+        "telegramApi": {
+          "id": "iJNIGdTYk2ZnIihg",
+          "name": "Telegram account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Webhook телеграмм').item.json.body.message.chat.id }}",
+        "text": "=Оприходование не создано: {{ $json.error.message.replace(/\\\\n/g, ' ').replace(/^412\\s*-\\s*/, '').replace(/\\\\\"/g, '\"').trim() }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1200,
+        800
+      ],
+      "id": "4b1c5d5b-4830-470f-a558-8d8dfe733cf7",
+      "name": "Ошибка оприходования",
+      "webhookId": "b56500f1-ab70-4797-ac50-928fcfce5684",
+      "credentials": {
+        "telegramApi": {
+          "id": "iJNIGdTYk2ZnIihg",
+          "name": "Telegram account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Извлекаем строку с JSON из вывода агента\nconst agentOutput = $input.first().json.output;\n\n// Удаляем маркеры кода (```json и ```) и парсим JSON\nconst jsonString = agentOutput.replace(/```json\\n|\\n```/g, '');\nconst parsedData = JSON.parse(jsonString);\n\n// Получаем или инициализируем счетчик\nlet counter = $vars.counter || 0;\ncounter++;\n$vars.counter = counter;\n\n// Формируем финальный объект в нужном формате\nconst result = {\n  \"name\": `Receipt_${counter}_${Date.now()}`,\n  \"externalCode\": parsedData.externalCode,\n  \"moment\": $now.toFormat('yyyy-MM-dd HH:mm:ss'),\n  \"applicable\": parsedData.applicable,\n  \"sum\": parsedData.sum,\n  \"organization\": parsedData.organization,\n  \"store\": parsedData.store,\n  \"positions\": parsedData.positions,\n  \"attributes\": parsedData.attributes,\n  \"overhead\": parsedData.overhead\n};\n\n// Возвращаем результат для следующей ноды\nreturn [{\n  json: result\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        816,
+        608
+      ],
+      "id": "60a78426-b1a7-40b3-8458-0cc642a6aa13",
+      "name": "Формирование тела запроса"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ JSON.stringify($input.all().map(item => item.json)) }}",
+        "options": {
+          "systemMessage": "# You are an AI-powered assistant who prepares data to create inventory documents in the MyWarehouse system.\n# Your task is to analyze product data and prepare the request body for the next HTTP request node.\n# SAMPLE REQUEST BODY:\n-d '{ \n\"name\": \"enter100\", \n\"externalCode\": \"34981sawfa42kek\", \n\"moment\": \"2016-06-21 16:56:52\", \n\"applicable\": true, \n\"sum\": 51241240, \n\"organization\": { \n\"meta\": { \n\"href\": \"https://api.moysklad.ru/api/remap/1.2/entity/organization/fae3561a-2e58-11e6-8a84-bae50000004e\", \n\"metadataHref\": \"https://api.moysklad.ru/api/remap/1.2/entity/organization/metadata\", \n\"type\": \"organization\", \n\"mediaType\": \"application/json\" \n} \n}, \n\"store\": { \n\"meta\": { \n\"href\": \"https://api.moysklad.ru/api/remap/1.2/entity/store/e94a6e65-4f64-11e6-8a84-bae500000066\", \n\"metadataHref\": \"https://api.moysklad.ru/api/remap/1.2/entity/store/metadata\", \n\"type\": \"store\", \n\"mediaType\": \"application/json\" \n} \n}, \n\"positions\": [ \n{ \n\"quantity\": 1, \n\"price\": 13200.0, \n\"assortment\": { \n\"meta\": { \n\"href\": \"https://api.moysklad.ru/api/remap/1.2/entity/product/328b0454-2e62-11e6-8a84-bae500000118\", \n\"metadataHref\": \"https://api.moysklad.ru/api/remap/1.2/entity/product/metadata\", \n\"type\": \"product\", \n\"mediaType\": \"application/json\" \n} \n}, \n\"overhead\": 0 \n}, \n{ \n\"quantity\": 1, \n\"price\": 13200.0, \n\"assortment\": { \n\"meta\": { \n\"href\": \"https://api.moysklad.ru/api/remap/1.2/entity/product/328b0454-2e62-11e6-8a84-bae500000118\", \n\"metadataHref\": \"https://api.moysklad.ru/api/remap/1.2/entity/product/metadata\", \n\"type\": \"product\", \n\"mediaType\": \"application/json\" \n} \n}, \n\"reason\": \"ABYR\", \n\"overhead\": 0 \n}, \n{ \n\"quantity\": 3, \n\"price\": 333444.0, \n\"assortment\": { \n\"meta\": { \n\"href\": \"https://api.moysklad.ru/api/remap/1.2/entity/variant/7a83c422-3c64-11e6-8a84-bae500000012\",\n\"metadataHref\": \"https://api.moysklad.ru/api/remap/1.2/entity/variant/metadata\",\n\"type\": \"variant\",\n\"mediaType\": \"application/json\"\n}\n},\n\"reason\": \"Updated reason\",\n\"overhead\": 0\n}\n],\n\"attributes\": [\n{\n\"meta\": {\n\"href\": \"https://api.moysklad.ru/api/remap/1.2/entity/enter/metadata/attributes/6a9150cd-5338-11e6-8a84-bae50000009b\", \n\"type\": \"attributemetadata\", \n\"mediaType\": \"application/json\" \n}, \n\"value\": \"AttributeValue1\" \n}, \n{ \n\"meta\": { \n\"href\": \"https://api.moysklad.ru/api/remap/1.2/entity/enter/metadata/attributes/6a9158b2-5338-11e6-8a84-bae50000009c\", \n\"type\": \"attributemetadata\", \n\"mediaType\": \"application/json\" \n}, \n\"value\": 404\n}\n],\n\"overhead\": {\n\"sum\": 40400,\n\"distribution\": \"weight\"\n}\n}'\n\n# INPUT DATA: You receive a JSON string array of products with the following fields: {name, code, quantity, unit, price, total, supplier, date}.\n# AVAILABLE TOOLS:\n1. find_store: Use it to populate the \"store\" field.\n\n2. find_organization: Use it to populate the \"organization\" field.\n\n3. Product_list: To get a list of all products and populate the product methods.\n# WORKFLOW REQUIREMENTS:\n1) To populate the sample request body, only change the attribute values.\n\n2) If you don't find any attribute values, enter \"UNKNOWN\" and assign them a sequential number, for example: \"UNKNOWN1\".\n\n# OUTPUT FORMAT:\n\nReturn ONLY the final JSON (as in the example) with all the prepared data.",
+          "maxIterations": 15
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        512,
+        608
+      ],
+      "id": "2bc2656f-ae09-4f3a-ac9f-d2ab99ff4fd7",
+      "name": "Сбор данных для оприходования",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Webhook телеграмм').item.json.body.message.from.id }}",
+        "text": "Распознать текст накладной не получилось",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        32,
+        784
+      ],
+      "id": "84d3501f-3f28-487d-b261-2bc207e04c52",
+      "name": "Ошибка распознавания текста на картинке",
+      "webhookId": "3e1fa241-9e56-452e-9ac0-4d1ba63e8eee",
+      "credentials": {
+        "telegramApi": {
+          "id": "iJNIGdTYk2ZnIihg",
+          "name": "Telegram account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Формирование и отправка оприходования\n",
+        "height": 560,
+        "width": 1648
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -224,
+        544
+      ],
+      "typeVersion": 1,
+      "id": "6a1df58a-e1c9-4027-93df-f4d38c1bb1e1",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "MS",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -2048,
+        816
+      ],
+      "id": "102750b7-2eb9-4044-a8fe-bd2776eea0d3",
+      "name": "Webhook телеграмм",
+      "webhookId": "e8e51c6b-b2e8-4eda-8945-f8edac390f02"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.body.message.chat.id }}",
+        "text": "=Здраствуйте, я кладовщик. Выберите действие.",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "Получить список товаров",
+                    "additionalFields": {
+                      "callback_data": "product_list"
+                    }
+                  },
+                  {
+                    "text": "Занести оприходование",
+                    "additionalFields": {
+                      "callback_data": "add_enter"
+                    }
+                  },
+                  {
+                    "text": "Создать товар",
+                    "additionalFields": {
+                      "callback_data": "create_product"
+                    }
+                  },
+                  {
+                    "text": "Посмотреть остатки",
+                    "additionalFields": {
+                      "callback_data": "stock"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1152,
+        1184
+      ],
+      "id": "d52c47b5-6465-4c40-a6ac-d52d0fa768b7",
+      "name": "Кнопки в телеге",
+      "webhookId": "b5730279-3ccc-4bf3-9f2d-27b11502dbd7",
+      "credentials": {
+        "telegramApi": {
+          "id": "iJNIGdTYk2ZnIihg",
+          "name": "Telegram account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.callback_query.data }}",
+                    "rightValue": "={{ $json.body.callback_query.message.reply_markup.inline_keyboard[0][1].callback_data }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "d55f09c2-0281-4c6c-a564-2d24b520d54f"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Оприходование"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "1203b26a-3bd1-4a58-b3ea-312f7bda0c1b",
+                    "leftValue": "={{ $json.body.callback_query.data }}",
+                    "rightValue": "={{ $json.body.callback_query.message.reply_markup.inline_keyboard[0][0].callback_data }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Список товаров"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "0ce2cb37-84ac-4f8f-b838-b890f2c4af17",
+                    "leftValue": "={{ $json.body.callback_query.data }}",
+                    "rightValue": "={{ $json.body.callback_query.message.reply_markup.inline_keyboard[0][2].callback_data }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Создать товар"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "9e54cbda-2791-4c5e-a260-1b2c3129cf98",
+                    "leftValue": "={{ $json.body.callback_query.data }}",
+                    "rightValue": "={{ $json.body.callback_query.message.reply_markup.inline_keyboard[0][3].callback_data }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Остатки"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -1152,
+        1440
+      ],
+      "id": "d65d0888-dca6-45d6-a178-0bdb24b6487c",
+      "name": "Switch1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f64973b6-80e3-4d90-89d2-8f84693e1e0f",
+              "leftValue": "={{ $json.body.callback_query.data }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        -1392,
+        1472
+      ],
+      "id": "73a37280-d5d7-41e8-9282-0881d1342a85",
+      "name": "Использование кнопок"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Webhook телеграмм').item.json.body.callback_query.message.chat.id }}",
+        "text": "=📋 Пришлите фото ТАБЛИЦЫ товаров накладной КАК КАРТИНКУ 📸 (не прикрепленный файл).\n\n⚠️ Чтобы агент правильно сработал: \n-На фото не должно быть лишнего текста \n-Только данные из таблицы\n-Четкое изображение\n\n👨‍💼 Оператору необходимо проверить данные после агента ✅\"",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -624,
+        1200
+      ],
+      "id": "343fc111-c29e-40fb-94b4-0b0b22008fff",
+      "name": "инструкции по фото",
+      "webhookId": "b3482d5c-9c45-4f49-a3b3-b99e6b687e19",
+      "credentials": {
+        "telegramApi": {
+          "id": "iJNIGdTYk2ZnIihg",
+          "name": "Telegram account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://api.moysklad.ru/api/remap/1.2/entity/product",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept-Encoding",
+              "value": "gzip"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -624,
+        1344
+      ],
+      "id": "09c243e8-c692-46dd-8bc3-b3aff44b79e3",
+      "name": "Получение списка товаров",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "Yp05pkimkq9ytBHo",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://api.moysklad.ru/api/remap/1.2/report/stock/all",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept-Encoding",
+              "value": "gzip"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -624,
+        1536
+      ],
+      "id": "143676ed-5b3b-47a0-82e7-3913248e4ffa",
+      "name": "Получение остатков",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "Yp05pkimkq9ytBHo",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b74f35d5-05db-4ef1-8bbe-ab9a77d35f3b",
+              "leftValue": "={{ $json.body.callback_query }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        -1392,
+        1184
+      ],
+      "id": "d3ff8375-be4c-4742-8329-9d6a18575617",
+      "name": "В письме пользователя нет клавиатуры"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "be184510-3028-4a20-b627-ac51e3f84bbd",
+              "name": "Названия",
+              "value": "={{ $input.all().map(item => item.json.rows?.map(row => row.name)).flat().filter(name => name !== undefined) }}",
+              "type": "string"
+            },
+            {
+              "id": "20f81d6a-f5f7-4bb0-ae33-c08bf3f1cc62",
+              "name": "Цена продажи",
+              "value": "={{ $input.all().map(item => item.json.rows?.map(row => row.salePrices?.[0]?.value)).flat().filter(price => price !== undefined) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -416,
+        1344
+      ],
+      "id": "9200a458-836b-4442-a2dd-f3d0d969cec9",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputData = $input.first().json;\nconst names = JSON.parse(inputData[\"Названия\"]);\nconst prices = JSON.parse(inputData[\"Цена продажи\"]);\n\n// Возвращаем парные данные с умножением цены на 0.01\nreturn [{\n    json: {\n        товары: names.map((name, index) => ({\n            название: name,\n            цена: prices[index] * 0.01\n        }))\n    }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -208,
+        1344
+      ],
+      "id": "ef7cb2bb-8e86-4696-b504-6cc8d55878a9",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Webhook телеграмм').item.json.body.callback_query.message.chat.id }}",
+        "text": "={{ $json['товары'].map((item, index) => `${index + 1}.\\t${item.название}\\t-\\t${item.цена} руб.`).join('\\n') }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        1344
+      ],
+      "id": "9c9c4442-ba08-4818-a300-88ac15a11592",
+      "name": "Ответ со списком товаров",
+      "webhookId": "b5730279-3ccc-4bf3-9f2d-27b11502dbd7",
+      "credentials": {
+        "telegramApi": {
+          "id": "iJNIGdTYk2ZnIihg",
+          "name": "Telegram account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c80fd177-855d-459f-bddb-95470f897d07",
+              "name": "Название товара",
+              "value": "={{ $input.all().map(item => item.json.rows?.map(row => row.name)).flat().filter(name => name !== undefined) }}",
+              "type": "string"
+            },
+            {
+              "id": "f3db3237-7271-4f51-a10d-a94ad89f4968",
+              "name": "Остатки",
+              "value": "={{ $input.all().map(item => item.json.rows?.map(row => row.stock)).flat().filter(stock => stock !== undefined) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -416,
+        1536
+      ],
+      "id": "454ad33c-44db-4b3a-aa33-07d2475bd5b4",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputData = $input.first().json;\n\n// Функция для безопасного парсинга JSON\nconst safeParse = (jsonString, defaultValue = []) => {\n    try {\n        return JSON.parse(jsonString);\n    } catch (e) {\n        return defaultValue;\n    }\n};\n\nconst names = safeParse(inputData[\"Название товара\"], []);\nconst stocks = safeParse(inputData[\"Остатки\"], []);\n\n// Создаем пары товаров\nconst товары = [];\nconst length = Math.min(names.length, stocks.length);\n\nfor (let i = 0; i < length; i++) {\n    товары.push({\n        название: names[i],\n        остаток: stocks[i]\n    });\n}\n\nreturn [{ json: { товары } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -208,
+        1536
+      ],
+      "id": "9e09dd54-9a29-4d8f-9e1f-e8a66149a64a",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Webhook телеграмм').item.json.body.callback_query.message.chat.id }}",
+        "text": "={{ $json['товары'].map((item, index) => `${index + 1}.\\t${item.название}\\t-\\t${item.остаток} ед.`).join('\\n') }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        1536
+      ],
+      "id": "1e762b47-6ded-4f81-954f-70ddcf026770",
+      "name": "Ответ со списком товаров1",
+      "webhookId": "b5730279-3ccc-4bf3-9f2d-27b11502dbd7",
+      "credentials": {
+        "telegramApi": {
+          "id": "iJNIGdTYk2ZnIihg",
+          "name": "Telegram account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "formTitle": "Создание товара",
+        "formDescription": "Заполните все поля без ошибок",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Наименование товара",
+              "placeholder": "Конфеты \"Ассорти\""
+            },
+            {
+              "fieldLabel": "Стоимость продажи в рублях и копейках",
+              "fieldType": "number",
+              "placeholder": "100,50"
+            },
+            {
+              "fieldLabel": "Неснижаемый остаток",
+              "fieldType": "number",
+              "placeholder": "10"
+            },
+            {
+              "fieldLabel": "Единицы измерения",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Литр"
+                  },
+                  {
+                    "option": "Штука"
+                  },
+                  {
+                    "option": "Грамм"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "Введите свое имя из телеграмм",
+              "placeholder": "Taras"
+            }
+          ]
+        },
+        "options": {
+          "appendAttribution": false,
+          "ignoreBots": true,
+          "useWorkflowTimezone": true
+        }
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        -400,
+        1744
+      ],
+      "id": "05b4b7e9-8e24-463d-94e0-0b95f9a0c844",
+      "name": "Заполнение данных для создания товара",
+      "webhookId": "caf99c08-865a-4a6b-b785-d5e5fd102c7a"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Webhook телеграмм').item.json.body.callback_query.message.chat.id }}",
+        "text": "Заполните форму: https://mark2020.app.n8n.cloud/form/caf99c08-865a-4a6b-b785-d5e5fd102c7a",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -624,
+        1744
+      ],
+      "id": "d27c5b7c-4c35-43a3-87c1-f9091a14d907",
+      "name": "Отправка ссылки на форму",
+      "webhookId": "2370db95-af0c-4c2f-987a-20c6d58f7afa",
+      "credentials": {
+        "telegramApi": {
+          "id": "iJNIGdTYk2ZnIihg",
+          "name": "Telegram account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.moysklad.ru/api/remap/1.2/entity/product",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept-Encoding",
+              "value": "gzip"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n{\n  name: $input.first().json[\"Наименование товара\"],\n  code: (Math.floor(100000 + Math.random() * 900000)).toString(),\n  article: (Math.floor(100000 + Math.random() * 900000)).toString(),\n  description: $input.first().json[\"Наименование товара\"] || \"\",\n  vat: 0,\n  effectiveVat: 0,\n  uom: $json.uom,\n  minStock: Number($input.first().json[\"Неснижаемый остаток\"]) || 0,\n  salePrices: [{\n    value: Math.round(Number($input.first().json[\"Стоимость продажи в рублях и копейках\"] || 0) * 100),\n    currency: {\n        meta: {\n            href: \"https://api.moysklad.ru/api/remap/1.2/entity/currency/88516b3c-75c7-11f0-0a80-1860001e7915\",\n            metadataHref: \"https://api.moysklad.ru/api/remap/1.2/entity/currency/metadata\",\n            type: \"currency\",\n            mediaType: \"application/json\"\n        }\n    },\n    priceType: {\n        meta: {\n            href: \"https://api.moysklad.ru/api/remap/1.2/context/companysettings/pricetype/88521d62-75c7-11f0-0a80-1860001e7916\",\n            type: \"pricetype\",\n            mediaType: \"application/json\"\n        },\n        id: \"88521d62-75c7-11f0-0a80-1860001e7916\",\n        name: \"Цена продажи\",\n        externalCode: \"cbcf493b-55bc-11d9-848a-00112f43529a\"\n    }\n  }]\n}\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        176,
+        1760
+      ],
+      "id": "c36bd3a3-a1a6-495b-93a2-163d32b2112e",
+      "name": "create_products_bulk",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "Yp05pkimkq9ytBHo",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const selectedUnit = $input.first().json[\"Единицы измерения\"];\n\nlet uomMeta;\n\nswitch(selectedUnit) {\n    case \"Грамм\":\n        uomMeta = {\n            \"href\": \"https://api.moysklad.ru/api/remap/1.2/entity/uom/8e2eb543-99e9-4077-bc31-93b1359de9c4\",\n            \"metadataHref\": \"https://api.moysklad.ru/api/remap/1.2/entity/uom/metadata\",\n            \"type\": \"uom\",\n            \"mediaType\": \"application/json\"\n        };\n        break;\n    case \"Литр\":\n        uomMeta = {\n            \"href\": \"https://api.moysklad.ru/api/remap/1.2/entity/uom/250d5161-f815-4524-85b6-fd6afebc1ad6\",\n            \"metadataHref\": \"https://api.moysklad.ru/api/remap/1.2/entity/uom/metadata\",\n            \"type\": \"uom\",\n            \"mediaType\": \"application/json\"\n        };\n        break;\n    case \"Штука\":\n    default:\n        uomMeta = {\n            \"href\": \"https://api.moysklad.ru/api/remap/1.2/entity/uom/19f1edc0-fc42-4001-94cb-c9ec9c62ec10\",\n            \"metadataHref\": \"https://api.moysklad.ru/api/remap/1.2/entity/uom/metadata\",\n            \"type\": \"uom\",\n            \"mediaType\": \"application/json\"\n        };\n}\n\nreturn [{ \n    json: {\n        uom: {\n            meta: uomMeta\n        }\n    } \n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -192,
+        1888
+      ],
+      "id": "5841202c-4df4-4c16-a321-bfe19815de1a",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -32,
+        1760
+      ],
+      "id": "3e6f8c66-e5fd-4477-83e0-da9cfbf4ca40",
+      "name": "Объединение данных",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "content": "## Кнопки",
+        "height": 640,
+        "width": 864,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1728,
+        1136
+      ],
+      "typeVersion": 1,
+      "id": "5461b55c-c636-4006-9f6a-d7bc9f811074",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Select rows from a table').item.json.id }}",
+        "text": "=Создан товар: {{ $('create_products_bulk').item.json.name }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        544,
+        1744
+      ],
+      "id": "9d8aac82-46ad-4616-ac30-e9ddb72441a1",
+      "name": "Отчет о созданном товаре",
+      "webhookId": "b56500f1-ab70-4797-ac50-928fcfce5684",
+      "credentials": {
+        "telegramApi": {
+          "id": "iJNIGdTYk2ZnIihg",
+          "name": "Telegram account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        352,
+        1744
+      ],
+      "id": "969b519b-5b7a-4050-b8e4-6ad9f5cb6d14",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "content": "## Выполнение кнопок",
+        "height": 1024,
+        "width": 1520,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -800,
+        1120
+      ],
+      "typeVersion": 1,
+      "id": "2e67c86f-24f4-4dab-a843-836d844e9c7e",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "Данные для пользователя телеграм",
+          "mode": "list",
+          "cachedResultName": "Данные для пользователя телеграм"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.result.chat.id }}",
+            "name": "={{ $json.result.chat.first_name }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -624,
+        1984
+      ],
+      "id": "137211e2-7e47-4313-9881-2b5ee5640cd8",
+      "name": "Insert rows in a table",
+      "credentials": {
+        "postgres": {
+          "id": "hUNJxcedLpPOQDvR",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "Данные для пользователя телеграм",
+          "mode": "list",
+          "cachedResultName": "Данные для пользователя телеграм"
+        },
+        "limit": 1,
+        "where": {
+          "values": [
+            {
+              "column": "name",
+              "value": "={{ $json['Введите свое имя из телеграмм'] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        176,
+        1968
+      ],
+      "id": "d3d66c92-2573-4507-9221-7eee9a86504b",
+      "name": "Select rows from a table",
+      "credentials": {
+        "postgres": {
+          "id": "hUNJxcedLpPOQDvR",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request5": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Считывание текста с фото",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Парсинг ответа OpenAI1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Ждем создание товаров",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Сбор данных для оприходования",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI_Chat_Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Сбор данных для оприходования",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "find_store": {
+      "ai_tool": [
+        [
+          {
+            "node": "Сбор данных для оприходования",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "find_organization": {
+      "ai_tool": [
+        [
+          {
+            "node": "Сбор данных для оприходования",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Фильтр от пустых массивов (items)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "search_products",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Replace Me": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "search_products": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "create_products_bulk1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create_products_bulk1": {
+      "main": [
+        [
+          {
+            "node": "Send a text message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Replace Me",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Считывание текста с фото": {
+      "main": [
+        [
+          {
+            "node": "Удалось считать?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Удалось считать?": {
+      "main": [
+        [
+          {
+            "node": "Парсинг ответа OpenAI1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ошибка распознавания текста на картинке",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Фото или нет": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Использование кнопок",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "В письме пользователя нет клавиатуры",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ждем создание товаров": {
+      "main": [
+        [
+          {
+            "node": "Сбор данных для оприходования",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Product_list": {
+      "ai_tool": [
+        [
+          {
+            "node": "Сбор данных для оприходования",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Фильтр от пустых массивов (items)": {
+      "main": [
+        [
+          {
+            "node": "Ждем создание товаров",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create_enter": {
+      "main": [
+        [
+          {
+            "node": "Количество товаров занесенных оприходованием",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ошибка оприходования",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Формирование тела запроса": {
+      "main": [
+        [
+          {
+            "node": "create_enter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Сбор данных для оприходования": {
+      "main": [
+        [
+          {
+            "node": "Формирование тела запроса",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook телеграмм": {
+      "main": [
+        [
+          {
+            "node": "Фото или нет",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Кнопки в телеге": {
+      "main": [
+        []
+      ]
+    },
+    "Использование кнопок": {
+      "main": [
+        [
+          {
+            "node": "Switch1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch1": {
+      "main": [
+        [
+          {
+            "node": "инструкции по фото",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Получение списка товаров",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Отправка ссылки на форму",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Получение остатков",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "В письме пользователя нет клавиатуры": {
+      "main": [
+        [
+          {
+            "node": "Кнопки в телеге",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Получение списка товаров": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Ответ со списком товаров",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Получение остатков": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Ответ со списком товаров1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Отправка ссылки на форму": {
+      "main": [
+        [
+          {
+            "node": "Insert rows in a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Заполнение данных для создания товара": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Объединение данных",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Select rows from a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Объединение данных",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Объединение данных": {
+      "main": [
+        [
+          {
+            "node": "create_products_bulk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create_products_bulk": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Отчет о созданном товаре",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select rows from a table": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "8264b431-9cbb-4e0a-8809-bd881fe623da",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6e6f0f5afec22a6d1e61c35af2396991937ebe8d502519545a07db63b494fb92"
+  },
+  "id": "sErahwIYbi3gxUpX",
+  "tags": []
+}
